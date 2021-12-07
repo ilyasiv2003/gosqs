@@ -14,19 +14,23 @@ import (
 
 const maxMessages = 10
 
-type Client struct {
+type Client interface {
+	StartConsumers(consumers map[string]Handler) error
+}
+
+type client struct {
 	client *sqs.Client
 	log    *logrus.Logger
 }
 
-func NewClient(client *sqs.Client, log *logrus.Logger) *Client {
-	return &Client{client: client, log: log}
+func NewClient(cli *sqs.Client, log *logrus.Logger) Client {
+	return &client{client: cli, log: log}
 }
 
 type Handler func(message []byte) error
 
 // StartConsumers doesn't have ctx for now, assuming it should consume for the whole program lifespan
-func (c Client) StartConsumers(consumers map[string]Handler) error {
+func (c client) StartConsumers(consumers map[string]Handler) error {
 	for qName, handler := range consumers {
 		qUrlOut, err := c.client.GetQueueUrl(context.Background(), &sqs.GetQueueUrlInput{QueueName: aws.String(qName)})
 		if err != nil {
@@ -39,7 +43,7 @@ func (c Client) StartConsumers(consumers map[string]Handler) error {
 	return nil
 }
 
-func (c Client) startConsumer(qName string, qUrl *string, handler Handler) {
+func (c client) startConsumer(qName string, qUrl *string, handler Handler) {
 	log := c.log.WithField("queue_name", qName)
 
 	for {

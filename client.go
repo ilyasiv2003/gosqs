@@ -44,7 +44,7 @@ func (c client) StartConsumers(consumers map[string]Handler) error {
 }
 
 func (c client) startConsumer(qName string, qUrl *string, handler Handler) {
-	log := c.log.WithField("queue_name", qName)
+	log := c.log.WithField("queueName", qName)
 
 	for {
 		output, err := c.client.ReceiveMessage(context.Background(), &sqs.ReceiveMessageInput{
@@ -58,7 +58,7 @@ func (c client) startConsumer(qName string, qUrl *string, handler Handler) {
 
 		var wg sync.WaitGroup
 		for _, message := range output.Messages {
-			log := log.WithField("message_id", *message.MessageId)
+			log := log.WithField("messageID", *message.MessageId)
 
 			wg.Add(1)
 			go func(log *logrus.Entry, m types.Message) {

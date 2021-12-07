@@ -54,9 +54,10 @@ func (c Client) startConsumer(qName string, qUrl *string, handler Handler) {
 
 		var wg sync.WaitGroup
 		for _, message := range output.Messages {
-			wg.Add(1)
+			log := log.WithField("message_id", message.MessageId)
 
-			go func(m types.Message) {
+			wg.Add(1)
+			go func(log *logrus.Entry, m types.Message) {
 				defer wg.Done()
 
 				err = handler([]byte(*m.Body))
@@ -72,7 +73,7 @@ func (c Client) startConsumer(qName string, qUrl *string, handler Handler) {
 				if err != nil {
 					log.WithError(err).Error("failed to delete message from sqs")
 				}
-			}(message)
+			}(log, message)
 		}
 
 		wg.Wait()
